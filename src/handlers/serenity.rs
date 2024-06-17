@@ -12,18 +12,11 @@ use crate::{
     utils::create_response_text,
 };
 use serenity::{
-    async_trait,
-    client::{Context, EventHandler},
-    model::{
-        application::command::{Command, CommandOptionType},
-        application::interaction::{
+    async_trait, client::{Context, EventHandler}, model::{
+        application::{command::{Command, CommandOptionType}, interaction::{
             application_command::ApplicationCommandInteraction, Interaction,
-        },
-        gateway::Ready,
-        id::GuildId,
-        prelude::{Activity, VoiceState},
-    },
-    prelude::Mentionable,
+        }}, gateway::Ready, guild::Guild, id::GuildId, prelude::{Activity, VoiceState}
+    }, prelude::Mentionable
 };
 
 pub struct SerenityHandler;
@@ -40,9 +33,6 @@ impl EventHandler for SerenityHandler {
         // attempts to authenticate to spotify
         *SPOTIFY.lock().await = Spotify::auth().await;
 
-        // creates the global application commands
-        self.create_commands(&ctx).await;
-
         // loads serialized guild settings
         self.load_guilds_settings(&ctx, &ready).await;
     }
@@ -55,6 +45,10 @@ impl EventHandler for SerenityHandler {
         if let Err(err) = self.run_command(&ctx, &mut command).await {
             self.handle_error(&ctx, &mut command, err).await
         }
+    }
+
+    async fn guild_create(&self, ctx: Context, guild: Guild, _is_new: bool) {
+        Self::create_commands(&self, &ctx, guild.id).await;
     }
 
     async fn voice_state_update(&self, ctx: Context, _old: Option<VoiceState>, new: VoiceState) {
@@ -79,8 +73,8 @@ impl EventHandler for SerenityHandler {
 }
 
 impl SerenityHandler {
-    async fn create_commands(&self, ctx: &Context) -> Vec<Command> {
-        Command::set_global_application_commands(&ctx.http, |commands| {
+    async fn create_commands(&self, ctx: &Context, guild_id: GuildId) -> Vec<Command> {
+        guild_id.set_application_commands(&ctx.http, |commands| {
             commands
                 .create_application_command(|command| {
                     command
