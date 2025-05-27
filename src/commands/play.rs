@@ -47,6 +47,8 @@ pub async fn play(
     ctx: &Context,
     interaction: &mut ApplicationCommandInteraction,
 ) -> Result<(), ParrotError> {
+    interaction.defer(&ctx.http).await?;
+
     let args = interaction.data.options.clone();
     let first_arg = args.first().unwrap();
 
