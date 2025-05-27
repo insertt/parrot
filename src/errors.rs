@@ -61,7 +61,7 @@ impl Display for ParrotError {
                     if parsed_text.contains("Sign in to confirm your age") {
                         f.write_str(TRACK_INAPPROPRIATE)
                     } else {
-                        f.write_str(TRACK_NOT_FOUND)
+                        f.write_str(&format!("{TRACK_NOT_FOUND} ({parsed_text})"))
                     }
                 }
                 _ => f.write_str(&format!("{err}")),
